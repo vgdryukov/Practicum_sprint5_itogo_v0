@@ -74,8 +74,18 @@ func (t Training) ActionInfo() (string, error) {
 	// TODO: реализовать функцию
 	var err error = nil
 	var calorics float64 = 0
+
 	distance := spentenergy.Distance(t.Steps, t.Height)
+	if distance <= 0 {
+		err = errors.New("incorrect distance calculation result")
+		return "", err
+	}
+
 	speed := spentenergy.MeanSpeed(t.Steps, t.Height, t.Duration)
+	if speed <= 0 {
+		err = errors.New("incorrect speed calculation result")
+		return "", err
+	}
 
 	if t.TrainingType == "Бег" {
 		calorics, err = spentenergy.RunningSpentCalories(t.Steps, t.Weight, t.Height, t.Duration)
