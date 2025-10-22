@@ -8,7 +8,6 @@ import (
 
 	"github.com/Yandex-Practicum/tracker/internal/personaldata"
 	"github.com/Yandex-Practicum/tracker/internal/spentenergy"
-	"github.com/Yandex-Practicum/tracker/internal/trainings"
 )
 
 type DaySteps struct {
@@ -22,8 +21,7 @@ func (ds *DaySteps) Parse(datastring string) (err error) {
 	// TODO: реализовать функцию
 	var errReturning error
 
-	dataParts, err := trainings.DataParts(datastring, 3, 2)
-
+	dataParts, err := spentenergy.DataSplit(datastring)
 	if err != nil {
 		errReturning = fmt.Errorf("invalid incoming data string ('%s') '%v': %w", datastring, dataParts, err)
 		return errReturning

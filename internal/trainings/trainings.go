@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Yandex-Practicum/tracker/internal/personaldata"
@@ -22,8 +21,9 @@ type Training struct {
 func (t *Training) Parse(datastring string) (err error) {
 	// TODO: реализовать функцию
 	var errReturning error
+	var duration time.Duration
 
-	dataParts, err := DataParts(datastring, 10, 3)
+	dataParts, err := spentenergy.DataSplit(datastring)
 
 	if err != nil {
 		errReturning = fmt.Errorf("invalid incoming data string ('%s') '%v': %w", datastring, dataParts, err)
@@ -41,13 +41,26 @@ func (t *Training) Parse(datastring string) (err error) {
 	}
 	t.Steps = num
 
-	t.TrainingType = dataParts[1]
+	if len(dataParts) == 3 {
+		t.TrainingType = dataParts[1]
 
-	duration, err := time.ParseDuration(dataParts[2])
-	if err != nil {
-		errReturning = fmt.Errorf("duration parsing error '%s': %w", dataParts[2], err)
-		return errReturning
+		dur, err := time.ParseDuration(dataParts[2])
+		if err != nil {
+			errReturning = fmt.Errorf("duration parsing error '%s': %w", dataParts[2], err)
+			return errReturning
+		}
+		duration = dur
 	}
+
+	if len(dataParts) == 2 {
+		dur, err := time.ParseDuration(dataParts[1])
+		if err != nil {
+			errReturning = fmt.Errorf("duration parsing error '%s': %w", dataParts[2], err)
+			return errReturning
+		}
+		duration = dur
+	}
+
 	if duration <= 0 {
 		errReturning = errors.New("incorrect duration")
 		return errReturning
@@ -74,29 +87,4 @@ func (t Training) ActionInfo() (string, error) {
 
 	stringReturning := fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n", t.TrainingType, t.Duration.Hours(), distance, speed, calorics)
 	return stringReturning, err
-}
-
-func DataParts(data string, minLength, numberParts int) ([]string, error) {
-	if len(data) < minLength {
-		return []string{}, errors.New("error in the incoming data string")
-	}
-
-	dataParts := strings.Split(data, ",")
-
-	if len(dataParts) != numberParts {
-		return []string{}, errors.New("error in the number of parts of the incoming string")
-	}
-	if len(dataParts[0]) == 0 {
-		return []string{}, errors.New("error in the incoming number of steps")
-	}
-	if numberParts == 2 && len(dataParts[1]) == 0 {
-		return []string{}, errors.New("error in incoming duration")
-	}
-	if numberParts == 3 && len(dataParts[1]) == 0 {
-		return []string{}, errors.New("error in the incoming activity type")
-	}
-	if numberParts == 3 && len(dataParts[2]) == 0 {
-		return []string{}, errors.New("error in incoming duration")
-	}
-	return dataParts, nil
 }

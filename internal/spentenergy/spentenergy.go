@@ -2,6 +2,7 @@ package spentenergy
 
 import (
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -12,6 +13,24 @@ const (
 	stepLengthCoefficient      = 0.45 // коэффициент для расчета длины шага на основе роста.
 	walkingCaloriesCoefficient = 0.5  // коэффициент для расчета калорий при ходьбе.
 )
+
+func DataSplit(data string) ([]string, error) {
+	dataParts := strings.Split(data, ",")
+
+	if len(dataParts) < 2 || len(dataParts) > 3 {
+		return []string{}, errors.New("error in the number of parts of the incoming string")
+	}
+	if len(dataParts[0]) == 0 {
+		return []string{}, errors.New("error in the incoming number of steps")
+	}
+	if (len(dataParts) == 2 && len(dataParts[1]) == 0) || (len(dataParts) == 3 && len(dataParts[2]) == 0) {
+		return []string{}, errors.New("error in incoming duration")
+	}
+	if len(dataParts) == 3 && len(dataParts[1]) == 0 {
+		return []string{}, errors.New("error in the incoming activity type")
+	}
+	return dataParts, nil
+}
 
 func CheckingData(nameFunc string, steps int, weight, height float64, duration time.Duration) error {
 	var err error
