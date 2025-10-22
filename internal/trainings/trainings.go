@@ -89,8 +89,16 @@ func (t Training) ActionInfo() (string, error) {
 
 	if t.TrainingType == "Бег" {
 		calorics, err = spentenergy.RunningSpentCalories(t.Steps, t.Weight, t.Height, t.Duration)
+		if err != nil {
+			err = errors.New("incorrect result of caloric calculation")
+			return "", err
+		}
 	} else if t.TrainingType == "Ходьба" {
 		calorics, err = spentenergy.WalkingSpentCalories(t.Steps, t.Weight, t.Height, t.Duration)
+		if err != nil {
+			err = errors.New("incorrect result of caloric calculation")
+			return "", err
+		}
 	} else {
 		return "", errors.New("unknown type of training")
 	}

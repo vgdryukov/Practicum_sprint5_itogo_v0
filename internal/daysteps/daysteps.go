@@ -57,8 +57,15 @@ func (ds DaySteps) ActionInfo() (string, error) {
 	var err error = nil
 	var calorics float64 = 0
 	distance := spentenergy.Distance(ds.Steps, ds.Height)
+	if distance <= 0 {
+		err = errors.New("incorrect distance calculation result")
+		return "", err
+	}
 	calorics, err = spentenergy.WalkingSpentCalories(ds.Steps, ds.Weight, ds.Height, ds.Duration)
-
+	if err != nil {
+		err = errors.New("incorrect result of caloric calculation")
+		return "", err
+	}
 	stringReturning := fmt.Sprintf("Количество шагов: %d.\nДистанция составила %.2f км.\nВы сожгли %.2f ккал.\n", ds.Steps, distance, calorics)
 	return stringReturning, err
 }
