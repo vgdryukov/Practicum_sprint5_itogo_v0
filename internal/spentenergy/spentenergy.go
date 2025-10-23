@@ -2,6 +2,8 @@ package spentenergy
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,38 +20,63 @@ func DataSplit(data string) ([]string, error) {
 	dataParts := strings.Split(data, ",")
 
 	if len(dataParts) < 2 || len(dataParts) > 3 {
-		return []string{}, errors.New("error in the number of parts of the incoming string")
+		return []string{}, errors.New("incorrect number of parts of the incoming string: expected 2 or 3 parts")
 	}
 	if len(dataParts[0]) == 0 {
-		return []string{}, errors.New("error in the incoming number of steps")
+		return []string{}, errors.New("steps data cannot be empty")
 	}
 	if (len(dataParts) == 2 && len(dataParts[1]) == 0) || (len(dataParts) == 3 && len(dataParts[2]) == 0) {
-		return []string{}, errors.New("error in incoming duration")
+		return []string{}, errors.New("duration cannot be empty")
 	}
 	if len(dataParts) == 3 && len(dataParts[1]) == 0 {
-		return []string{}, errors.New("error in the incoming activity type")
+		return []string{}, errors.New("activity type cannot be empty")
 	}
+
 	return dataParts, nil
 }
 
-func CheckingData(nameFunc string, steps int, weight, height float64, duration time.Duration) error {
-	var err error
+func ParseSteps(stepsStr string) (int, error) {
+	steps, err := strconv.Atoi(stepsStr)
+	if err != nil {
+		return 0, fmt.Errorf("incorrect steps format '%s': %w: ", stepsStr, err)
+	}
 	if steps <= 0 {
-		err = errors.New("error in " + nameFunc + " : incoming steps are <= 0")
-		return err
+		return 0, errors.New("steps must be positive")
 	}
-	if weight < 5 {
-		err = errors.New("error in " + nameFunc + " : incoming weight are less 5kg")
-		return err
+
+	return steps, nil
+}
+
+func CheckingData(nameFunc string, steps int, weight, height float64, duration time.Duration) error {
+	type ValidationConfig struct {
+		MinSteps    int
+		MinWeight   float64
+		MaxWeight   float64
+		MinHeight   float64
+		MaxHeight   float64
+		MinDuration time.Duration
 	}
-	if height < 1 {
-		err = errors.New("error in " + nameFunc + " : incoming height are less 1m")
-		return err
+	var DefaultValidation = ValidationConfig{
+		MinSteps:    1,
+		MinWeight:   5.0,   //кг.
+		MaxWeight:   300.0, //кг.
+		MinHeight:   1.0,   //м.
+		MaxHeight:   2.5,   //м.
+		MinDuration: time.Second,
 	}
-	if duration <= 0 {
-		err = errors.New("error in " + nameFunc + " : incoming duration are <= 0")
-		return err
+	if steps < DefaultValidation.MinSteps {
+		return fmt.Errorf("%s: steps must be at least %d", nameFunc, DefaultValidation.MinSteps)
 	}
+	if weight < DefaultValidation.MinWeight || weight > DefaultValidation.MaxWeight {
+		return fmt.Errorf("%s: weight must be at least %.1f ang less then %.1f kg.", nameFunc, DefaultValidation.MinWeight, DefaultValidation.MaxWeight)
+	}
+	if height < DefaultValidation.MinHeight || height > DefaultValidation.MaxHeight {
+		return fmt.Errorf("%s: height must be at least %.1f ang less then %.1f m.", nameFunc, DefaultValidation.MinHeight, DefaultValidation.MaxHeight)
+	}
+	if duration < DefaultValidation.MinDuration {
+		return fmt.Errorf("%s: duration must be positive", nameFunc)
+	}
+
 	return nil
 }
 
@@ -59,6 +86,7 @@ func WalkingSpentCalories(steps int, weight, height float64, duration time.Durat
 		return 0, err
 	}
 	spentCalories := walkingCaloriesCoefficient * (weight * MeanSpeed(steps, height, duration) * duration.Minutes()) / minInH
+
 	return spentCalories, nil
 }
 
@@ -68,6 +96,7 @@ func RunningSpentCalories(steps int, weight, height float64, duration time.Durat
 		return 0, err
 	}
 	spentCalories := (weight * MeanSpeed(steps, height, duration) * duration.Minutes()) / minInH
+
 	return spentCalories, nil
 }
 
@@ -77,6 +106,7 @@ func MeanSpeed(steps int, height float64, duration time.Duration) float64 {
 		return 0
 	}
 	averageSpeed := Distance(steps, height) / float64(duration.Hours())
+
 	return averageSpeed
 }
 
@@ -86,5 +116,6 @@ func Distance(steps int, height float64) float64 {
 	if distanceInKm <= 0 {
 		return 0
 	}
+
 	return distanceInKm
 }

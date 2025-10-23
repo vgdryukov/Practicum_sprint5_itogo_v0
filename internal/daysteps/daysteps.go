@@ -3,7 +3,6 @@ package daysteps
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/Yandex-Practicum/tracker/internal/personaldata"
@@ -27,20 +26,20 @@ func (ds *DaySteps) Parse(datastring string) (err error) {
 		return errReturning
 	}
 
-	num, err := strconv.Atoi(dataParts[0])
+	if len(dataParts) != 2 {
+		errReturning = errors.New("incorrect number of data line parts")
+		return errReturning
+	}
+
+	ds.Steps, err = spentenergy.ParseSteps(dataParts[0])
 	if err != nil {
-		errReturning = fmt.Errorf("incorrect input of the number of steps '%s': %w", dataParts[0], err)
+		errReturning = fmt.Errorf("error parsing the number of steps '%s': %w: ", dataParts[0], err)
 		return errReturning
 	}
-	if num <= 0 {
-		errReturning = errors.New("incorrect number of steps")
-		return errReturning
-	}
-	ds.Steps = num
 
 	duration, err := time.ParseDuration(dataParts[1])
 	if err != nil {
-		errReturning = fmt.Errorf("duration parsing error '%s': %w", dataParts[2], err)
+		errReturning = fmt.Errorf("duration parsing error '%s': %w", dataParts[1], err)
 		return errReturning
 	}
 	if duration <= 0 {
@@ -55,17 +54,20 @@ func (ds *DaySteps) Parse(datastring string) (err error) {
 func (ds DaySteps) ActionInfo() (string, error) {
 	// TODO: реализовать функцию
 	var err error = nil
-	var calorics float64 = 0
+	var calories float64 = 0
+
 	distance := spentenergy.Distance(ds.Steps, ds.Height)
 	if distance <= 0 {
 		err = errors.New("incorrect distance calculation result")
 		return "", err
 	}
-	calorics, err = spentenergy.WalkingSpentCalories(ds.Steps, ds.Weight, ds.Height, ds.Duration)
+
+	calories, err = spentenergy.WalkingSpentCalories(ds.Steps, ds.Weight, ds.Height, ds.Duration)
 	if err != nil {
 		err = errors.New("incorrect result of caloric calculation")
 		return "", err
 	}
-	stringReturning := fmt.Sprintf("Количество шагов: %d.\nДистанция составила %.2f км.\nВы сожгли %.2f ккал.\n", ds.Steps, distance, calorics)
+	stringReturning := fmt.Sprintf("Количество шагов: %d.\nДистанция составила %.2f км.\nВы сожгли %.2f ккал.\n", ds.Steps, distance, calories)
+
 	return stringReturning, err
 }
